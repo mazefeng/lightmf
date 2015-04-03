@@ -6,7 +6,7 @@ A light-weight matrix factorization tool
 ##Useage
 
 ###lightmf-train
-`
+
 ./lightmf-train [OPTIONS]
 Options are:
  -train        (required)          Filename for training data 
@@ -18,18 +18,15 @@ Options are:
  -alpha        (default = 0.01)    Learning rate of SGD 
  -validate     (default = 0)       Proportion of training data for validation 
  -help                             Show this help 
-`
 
 ###lightmf-test
 
-`
 ./lightmf-test [OPTIONS]
 Options are:
  -model    (required)  Latent factor model path 
  -test     (required)  Filename for test data 
  -output   (required)  Filename for output data 
  -help                 Show this help 
-`
 
 ##Evaluation
 
