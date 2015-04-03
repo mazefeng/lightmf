@@ -3,6 +3,8 @@ A light-weight matrix factorization tool
 
 ##Introduction
 
+*lightmf*
+
 ##Useage
 
 ###lightmf-train
@@ -21,12 +23,12 @@ A light-weight matrix factorization tool
 
 ###lightmf-test
 
-./lightmf-test [OPTIONS]
-Options are:
- -model    (required)  Latent factor model path 
- -test     (required)  Filename for test data 
- -output   (required)  Filename for output data 
- -help                 Show this help 
+    ./lightmf-test [OPTIONS]
+    Options are:
+     -model    (required)  Latent factor model path 
+     -test     (required)  Filename for test data 
+     -output   (required)  Filename for output data 
+     -help                 Show this help 
 
 ##Evaluation
 
