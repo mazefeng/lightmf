@@ -3,6 +3,13 @@ A light-weight matrix factorization tool
 
 ##Introduction
 
+| Name | Description          |
+| ------------- | ----------- |
+| Help      | ~~Display the~~ help window.|
+| Close     | _Closes_ a window     |
+
+
+
 |lightmf|是一个轻量级的矩阵分解工具, 实现了推荐系统中其中一类重要的模型--隐因子模型的训练和预测. 
 
 从功能上看lightmf使用了SGD实现了对带偏置的隐因子模型(BiasMF)的训练. 
