@@ -5,9 +5,9 @@ __A light-weight matrix factorization tool__
 
 __lightmf__是一个轻量级的矩阵分解工具, 实现了推荐系统中其中一类重要的模型--隐因子模型的训练和预测. 
 
-从功能上看lightmf使用了SGD实现了对带偏置的隐因子模型(BiasMF)的训练. 
-尽管没有像SVDFeature一样提供包括SVD++, Learning to Rank等衍生模型, 
-也没有libmf提供除了SGD外的ALS, MCMC等多种模型训练方式, lightmf的易用性也是前两者无法比拟的, 体现在以下几个方面:
+从功能上看__lightmf__使用了SGD实现了对带偏置的隐因子模型(__BiasMF__)的训练. 
+尽管没有像__SVDFeature__一样提供包括SVD++, Learning to Rank等衍生模型, 
+也没有__libfm__提供除了SGD外的ALS, MCMC等多种模型训练方式, __lightmf__的易用性也是前两者无法比拟的, 体现在以下几个方面:
 
 1.  训练和预测工具简单易用, 只需要提供2-3个必要的参数即可运行
 2.  输入数据格式简洁, 无需做任何预处理. 支持文本id数据
@@ -17,9 +17,13 @@ __lightmf__是一个轻量级的矩阵分解工具, 实现了推荐系统中其�
 
 ##Useage
 
+运行`make`,在output/bin目录下产出__lightmf-train__和__lightmf-test__这两个训练和测试工具.
+
+若要针对__lightmf__进行二次开发，可以使用output/include下面的头文件和output/lib/liblightmf.so
+
 ###lightmf-train
 
-隐因子模型的训练数据包括有__uid__, __iid__和__rating__组成的三元组, 三元组之间以一个空格隔开："__uid iid rating 附加信息__". 
+隐因子模型的训练数据包括有uid, iid和rating组成的三元组, 三元组之间以一个空格隔开：__uid iid rating 附加信息__. 
 uid和iid可以为文本id，__lightmf__内部实现了对文本id对整型id的映射. 附加信息不会影响到模型的训练. 
 
 除了训练数据的路径, 另外一个必须提供的参数是模型保存的路径, 该路径必须是一个目录, 用于保存每一轮迭代后的模型. 
@@ -57,19 +61,17 @@ __用户/物品的文本id 内部整型id 偏置项 隐因子向量__
      -train        (required)          Filename for training data 
      -model        (required)          Output path for model 
      -num_factor   (default = 25)      Number of latent factors 
-     -sigma        (default = 0. 01)    Initial std of normal distribution for latent factors 
-     -lambda       (default = 0. 005)   L2 regularizaton parameter 
+     -sigma        (default = 0. 01)   Initial std of normal distribution for latent factors 
+     -lambda       (default = 0. 005)  L2 regularizaton parameter 
      -max_epoch    (default = 10)      Max training iterations 
-     -alpha        (default = 0. 01)    Learning rate of SGD 
+     -alpha        (default = 0. 01)   Learning rate of SGD 
      -validate     (default = 0)       Proportion of training data for validation 
      -help                             Show this help 
 
 ###lightmf-test
 
 预测的接口比较简单，仅包含3个必须的参数. 测试数据的格式必须与训练数据一致.
-
 __model__参数与训练工具的model参数略有不同，这里的model指向的是一个元参数文件的路径.
-
 __output__是预测的输出，将在每一行测试数据之间加上一个预测的打分值.
 
 ####lightmf-test命令行参数示例
@@ -83,7 +85,43 @@ __output__是预测的输出，将在每一行测试数据之间加上一个预�
 
 ##Evaluation
 
+使用__movielens-1m__数据集评估__lightmf__的性能.
+该数据集包含由6000+用户对4000+部电影的100万左右的打分数据. 
+随机划分得到的训练集包含__939,809__样本，测试集包括__60,400__样本.
+使用默认参数进行训练,每一轮迭代的时间仅为__1秒__，stderr输出如下:
 
+    $ ./lightmf-train -train ra.train -model model/
+    [Train]: ra.train
+    [Model]: model/
+    [NumFactor]: 25
+    [Sigma]: 0.01
+    [Lambda]: 0.005
+    [MaxEpoch]: 10
+    [Alpha]: 0.01
+    [Validate]: 0
+    [INFO]: kv_dict size = 939809
+    [INFO]: rows size = 6040
+    [INFO]: cols size = 3682
+    [INFO]: mean = 3.56966
+    [INFO]: sum = 3.3548e+06
+    [Iter] = 0000 [RMSE] = 0.951473 [Duration] = 0.93 Sec.
+    [Iter] = 0001 [RMSE] = 0.912981 [Duration] = 1.11 Sec.
+    [Iter] = 0002 [RMSE] = 0.908044 [Duration] = 1.10 Sec.
+    [Iter] = 0003 [RMSE] = 0.905934 [Duration] = 1.10 Sec.
+    [Iter] = 0004 [RMSE] = 0.903140 [Duration] = 1.11 Sec.
+    [Iter] = 0005 [RMSE] = 0.895122 [Duration] = 1.09 Sec.
+    [Iter] = 0006 [RMSE] = 0.882142 [Duration] = 1.10 Sec.
+    [Iter] = 0007 [RMSE] = 0.868088 [Duration] = 1.08 Sec.
+    [Iter] = 0008 [RMSE] = 0.853275 [Duration] = 1.09 Sec.
+    [Iter] = 0009 [RMSE] = 0.838199 [Duration] = 1.08 Sec.
+
+使用最后一轮的结果对测试集进行评估，RMSE为__0.889795__. stderr输出如下:
+
+    ./lightmf-test -test ra.test -model model/0009 -output ra.test.out
+    [Model]: model/0009
+    [Test]: ra.test
+    [Output]: ra.test.out
+    RMSE on [ra.test]: 0.889795
 
 ##Todo
 
