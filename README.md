@@ -21,7 +21,7 @@ __lightmf__是一个轻量级的矩阵分解工具, 实现了推荐系统中其�
 
 若要针对__lightmf__进行二次开发, 可以使用output/include下面的头文件和output/lib/liblightmf.so
 
-###lightmf-train
+##lightmf-train
 
 隐因子模型的训练数据包括有uid, iid和rating组成的三元组, 三元组之间以一个空格隔开：
 
@@ -59,7 +59,7 @@ __用户/物品的文本id 内部整型id 偏置项 隐因子向量__
 
 使用脚本语言(如python)可以很容易地实现对模型的二次开发
 
-####lightmf-train命令行参数示例
+###lightmf-train命令行参数示例
 
     ./lightmf-train [OPTIONS]
     Options are:
@@ -73,13 +73,13 @@ __用户/物品的文本id 内部整型id 偏置项 隐因子向量__
      -validate     (default = 0)       Proportion of training data for validation 
      -help                             Show this help 
 
-###lightmf-test
+##lightmf-test
 
 预测的接口比较简单, 仅包含3个必须的参数. 测试数据的格式必须与训练数据一致.
 __model__参数与训练工具的model参数略有不同, 这里的model指向的是一个元参数文件的路径.
 __output__是预测的输出, 将在每一行测试数据之间加上一个预测的打分值.
 
-####lightmf-test命令行参数示例
+###lightmf-test命令行参数示例
 
     ./lightmf-test [OPTIONS]
     Options are:
@@ -92,6 +92,7 @@ __output__是预测的输出, 将在每一行测试数据之间加上一个预�
 
 使用__movielens-1m__数据集评估__lightmf__的性能.
 该数据集包含由6000+用户对4000+部电影的100万左右的打分数据.
+
 随机划分得到的训练集包含__939, 809__样本, 测试集包括__60, 400__样本.
 使用默认参数进行训练, 每一轮迭代的时间仅为__1秒__, stderr输出如下:
 
