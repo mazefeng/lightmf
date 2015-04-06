@@ -33,6 +33,7 @@ A light-weight matrix factorization tool
 5. alpha: SGD的学习率.默认值为0.01.对于矩阵分解这类非凸模型来说,学习率直接影响了模型最终是否能够收敛
 6. validate: 验证数据的比例.设置为n意味着1/n的训练数据将用不会用于训练,而是单独用于验证模型的效果.validate默认值为0,即不进行验证.推荐的做法是,使用一定比例的数据用于验证,挑选出最优的参数后,在使用最优参数和全量训练数据重新训练模型.
 
+####lightmf-train命令行参数示例
 
     ./lightmf-train [OPTIONS]
     Options are:
@@ -47,8 +48,9 @@ A light-weight matrix factorization tool
      -help                             Show this help 
 
 
-
 ###lightmf-test
+
+####lightmf-test命令行参数示例
 
     ./lightmf-test [OPTIONS]
     Options are:
