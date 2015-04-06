@@ -1,5 +1,5 @@
 # lightmf
-A light-weight matrix factorization tool
+__A light-weight matrix factorization tool__
 
 ##Introduction
 
@@ -64,10 +64,13 @@ __用户/物品的文本id 内部整型id 偏置项 隐因子向量__
      -validate     (default = 0)       Proportion of training data for validation 
      -help                             Show this help 
 
-
 ###lightmf-test
 
+预测的接口比较简单，仅包含3个必须的参数. 测试数据的格式必须与训练数据一致.
 
+__model__参数与训练工具的model参数略有不同，这里的model指向的是一个元参数文件的路径.
+
+__output__是预测的输出，将在每一行测试数据之间加上一个预测的打分值.
 
 ####lightmf-test命令行参数示例
 
@@ -81,7 +84,8 @@ __用户/物品的文本id 内部整型id 偏置项 隐因子向量__
 ##Evaluation
 
 
+
 ##Todo
 
-
+1. 实现__Sigmoid Matrix Factorization__，增加对0-1打分数据的支持
 
