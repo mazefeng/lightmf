@@ -155,7 +155,12 @@ int main(int argc, char **argv){
  
     matrix->print_info();
 
-    LatentFactorModel* model = mf_model->train(opt->params, matrix, opt->model);
+    string path(opt->model);
+    if(path.compare(path.size() - 1, 1, "/")){
+        path = path + "/";
+    }
+    
+    LatentFactorModel* model = mf_model->train(opt->params, matrix, path);
 
     return 0;
 }

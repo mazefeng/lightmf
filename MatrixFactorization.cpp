@@ -67,10 +67,6 @@ LatentFactorModel* MatrixFactorization::train(MfParams* params, SparseMatrix* ma
     _matrix = matrix;
     _model = new LatentFactorModel(_matrix, _params->num_factor, _params->sigma);
 
-    if(path.compare(path.size() - 1, 1, "/")){
-        path = path + "/";
-    }
-
     data = (Triplet*) malloc(_matrix->length() * sizeof(Triplet));
     map<pair<int, int>, double>::iterator iter;
 
