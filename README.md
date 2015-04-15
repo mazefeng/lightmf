@@ -90,6 +90,8 @@ __output__是预测的输出, 将在每一行测试数据之间加上一个预�
 
 ##Evaluation
 
+### Movielens-1M
+
 使用__movielens-1m__数据集评估__lightmf__的性能.
 该数据集包含由6000+用户对4000+部电影的100万左右的打分数据.
 
@@ -128,6 +130,49 @@ __output__是预测的输出, 将在每一行测试数据之间加上一个预�
     [Test]: ra.test
     [Output]: ra.test.out
     RMSE on [ra.test]: 0.889795
+
+### Movielens-20M
+
+__movielens-20m__是由__GroupLens__最新发布的电影推荐数据集. 
+该数据集包含由__138, 493__位用户对__26, 744__部电影的打分数据, 共计__20000263__份训练样本.
+stderr输出如下:
+
+    [Train]: ./ml-20m/ra.train
+    [Model]: ../model/
+    [NumFactor]: 25
+    [Sigma]: 0.01
+    [Lambda]: 0.005
+    [MaxEpoch]: 20
+    [Alpha]: 0.01
+    [Validate]: 0
+    [INFO]: kv_dict size = 20000263
+    [INFO]: rows size = 138493
+    [INFO]: cols size = 26744
+    [INFO]: mean = 3.52553
+    [INFO]: sum = 7.05115e+07
+    [Iter] = 0000 [RMSE] = 0.884548 [Duration] = 22.62 Sec.
+    [Iter] = 0001 [RMSE] = 0.856210 [Duration] = 23.51 Sec.
+    [Iter] = 0002 [RMSE] = 0.827038 [Duration] = 23.38 Sec.
+    [Iter] = 0003 [RMSE] = 0.798865 [Duration] = 23.39 Sec.
+    [Iter] = 0004 [RMSE] = 0.775023 [Duration] = 23.35 Sec.
+    [Iter] = 0005 [RMSE] = 0.755519 [Duration] = 23.33 Sec.
+    [Iter] = 0006 [RMSE] = 0.739148 [Duration] = 22.88 Sec.
+    [Iter] = 0007 [RMSE] = 0.726245 [Duration] = 23.30 Sec.
+    [Iter] = 0008 [RMSE] = 0.716560 [Duration] = 22.94 Sec.
+    [Iter] = 0009 [RMSE] = 0.709158 [Duration] = 23.07 Sec.
+    [Iter] = 0010 [RMSE] = 0.703336 [Duration] = 23.20 Sec.
+    [Iter] = 0011 [RMSE] = 0.698626 [Duration] = 22.90 Sec.
+    [Iter] = 0012 [RMSE] = 0.694734 [Duration] = 22.80 Sec.
+    [Iter] = 0013 [RMSE] = 0.691435 [Duration] = 22.96 Sec.
+    [Iter] = 0014 [RMSE] = 0.688630 [Duration] = 22.99 Sec.
+    [Iter] = 0015 [RMSE] = 0.686178 [Duration] = 22.97 Sec.
+    [Iter] = 0016 [RMSE] = 0.684050 [Duration] = 23.20 Sec.
+    [Iter] = 0017 [RMSE] = 0.682150 [Duration] = 23.19 Sec.
+    [Iter] = 0018 [RMSE] = 0.680487 [Duration] = 22.72 Sec.
+    [Iter] = 0019 [RMSE] = 0.678962 [Duration] = 23.14 Sec.
+
+每一轮迭代时间仅为__23秒__左右
+当把全量数据加载进内存后, __lightmf__的内存占用仅为__1637Mb__, 由此可见, 内存并不会成为瓶颈. 
 
 ##Todo
 
