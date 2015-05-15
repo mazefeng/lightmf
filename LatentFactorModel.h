@@ -19,6 +19,7 @@ class MfParams;
 class LatentFactorModel{
 private:
     SparseMatrix* matrix;
+    int type;
     int num_factor;
     double sigma;
     bool init_params(double* v, int size);
@@ -31,7 +32,7 @@ public:
     double mu;
 
 public:
-    LatentFactorModel(SparseMatrix* _matrix, int _num_factor, double _sigma);
+    LatentFactorModel(SparseMatrix* _matrix, int _type, int _num_factor, double _sigma);
     LatentFactorModel();
     ~LatentFactorModel();
     bool dump(string path);
@@ -40,6 +41,9 @@ public:
     
     SparseMatrix* getSparseMatrix(){ return matrix; }
     void setSparseMatrix(SparseMatrix* _matrix){ matrix = _matrix; }
+
+    int getType(){ return type; }
+    void setType(int _type){ type = _type; }
 
     int getNumFactor(){ return num_factor; }
     void setNumFactor(int _num_factor){ num_factor = _num_factor; }

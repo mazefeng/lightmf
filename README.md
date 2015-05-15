@@ -15,6 +15,10 @@ __lightmf__是一个轻量级的矩阵分解工具, 实现了推荐系统中其�
 4. __训练模型明文保存__, 支持对模型进行分析和二次开发
 5. 采用多线程加速, 模型训练速度快
 
+##Change Log
+
+__2015/05/15__: 增加__Sigmoid Matrix Factorization__功能
+
 ##Useage
 
 运行`make`, 在output/bin目录下产出__lightmf-train__和__lightmf-test__这两个训练和测试工具.
@@ -29,9 +33,11 @@ __uid iid rating 附加信息__
 
 uid和iid可以为文本id, __lightmf__内部实现了对文本id对整型id的映射. 附加信息不会影响到模型的训练.
 
-除了训练数据的路径, 另外一个必须提供的参数是模型保存的路径, 该路径必须是一个目录, 用于保存每一轮迭代后的模型.
+除了训练数据路径, 第二个必须提供的参数是模型保存的路径, 该路径必须是一个目录, 用于保存每一轮迭代后的模型.
 
-除了__train__和__model__这两个参数外, 其他参数都是可选的, 包括：
+第三个必须提供的参数是__type__, 指定训练任务的类型: 1-回归问题, 2-分类问题.
+
+除了__train__, __model__和__type__这三个参数外, 其他参数都是可选的, 包括：
 
 1. __num\_factor__: 隐因子的数量. 隐因子数量越多, 训练速度越慢, 同时过拟合的可能性更高. 默认为__25__, 一般隐因子数量的选择范围是__20~50__
 2. __sigma__: 随机初始化隐因子模型的正态分布的方差. 使用以0为均值的正态分布对隐因子模型进行初始化化是一种常见做法. 正态分布方差的选择对结果会有一定的影响. 默认值是__0.01__. 使用太小的方差会影响模型的收敛速度
@@ -42,18 +48,18 @@ uid和iid可以为文本id, __lightmf__内部实现了对文本id对整型id的�
 
 隐因子模型以明文的形式保存, 每一轮迭代产出的模型保存在以迭代次数编号的文件里. 
 
-第一轮迭代后产出的模型包括以下3个文件: 0000, 0000.row, 0000.col, 以此类推. 
-其中, 0000保存模型的元参数, 格式如下:
+第一轮迭代后产出的模型包括以下3个文件: pass-0000, pass-0000.row, pass-0000.col, 以此类推. 
+其中, pass-0000保存模型的元参数, 格式如下:
 
 Line 1: __num\_factor__ __sigma__ __用户隐因子向量数量__ __物品隐因子向量数量__
 
-Line 2: __用户隐因子模型保存路径__, 即0000.row
+Line 2: __用户隐因子模型保存路径__, 即pass-0000.row
 
-Line 3: __物品隐因子模型保存路径__, 即0000.col
+Line 3: __物品隐因子模型保存路径__, 即pass-0000.col
 
 Line 4: __全局打分平均值mu__
 
-0000\.row和0000\.col保存了完整的用户/物品隐因子模型, 以行为单位, 每一行的数据使用空格分割, 字段的意义依次为: 
+pass-0000\.row和pass-0000\.col保存了完整的用户/物品隐因子模型, 以行为单位, 每一行的数据使用空格分割, 字段的意义依次为: 
 
 __用户/物品的文本id 内部整型id 偏置项 隐因子向量__
 
@@ -65,6 +71,7 @@ __用户/物品的文本id 内部整型id 偏置项 隐因子向量__
     Options are:
      -train        (required)          Filename for training data 
      -model        (required)          Output path for model 
+     -type         (required)          Output type, 1 for regression, 2 for classification
      -num_factor   (default = 25)      Number of latent factors 
      -sigma        (default = 0.01)    Initial std of normal distribution for latent factors 
      -lambda       (default = 0.005)   L2 regularizaton parameter 
@@ -138,7 +145,7 @@ __movielens-20m__是由__GroupLens__最新发布的电影推荐数据集.
 stderr输出如下:
 
     [Train]: ./ml-20m/ra.train
-    [Model]: ../model/
+    [Model]: model/
     [NumFactor]: 25
     [Sigma]: 0.01
     [Lambda]: 0.005
@@ -176,5 +183,5 @@ stderr输出如下:
 
 ##Todo
 
-1. 实现__Sigmoid Matrix Factorization__, 增加对0-1打分数据的支持
+1. ~~实现__Sigmoid Matrix Factorization__, 增加对0-1打分数据的支持~~
 2. 实现__读缓存__, 缓解大数据集带来的内存压力

@@ -1,7 +1,8 @@
 #include "LatentFactorModel.h"
 
-LatentFactorModel::LatentFactorModel(SparseMatrix* _matrix, int _num_factor, double _sigma){
+LatentFactorModel::LatentFactorModel(SparseMatrix* _matrix, int _type, int _num_factor, double _sigma){
     matrix = _matrix;
+    type = _type;
     num_factor = _num_factor;
     sigma = _sigma;
 
@@ -28,6 +29,7 @@ LatentFactorModel::LatentFactorModel(SparseMatrix* _matrix, int _num_factor, dou
 
 LatentFactorModel::LatentFactorModel(){
     matrix = NULL;
+    type = 0;
     num_factor = 0;
     sigma = 0.0;
     mu = 0.0;
@@ -98,7 +100,7 @@ bool LatentFactorModel::dump(string path){
 
     os.open(meta_file.c_str());
 
-    os << num_factor << " " << sigma << " " << matrix->rows()->size() << " " << matrix->cols()->size() << endl;
+    os << type << " " << num_factor << " " << sigma << " " << matrix->rows()->size() << " " << matrix->cols()->size() << endl;
     os << row_file << endl;
     os << col_file << endl;
     os << mu << endl;
@@ -182,7 +184,7 @@ bool LatentFactorModel::load(string path){
         throw runtime_error(meta_file + " not exist"); 
     }
 
-    is >> num_factor >> sigma >> row_size >> col_size;
+    is >> type >> num_factor >> sigma >> row_size >> col_size;
     is >> row_file;
     is >> col_file;
     is >> mu;

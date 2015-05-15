@@ -16,6 +16,8 @@
 
 using namespace std;
 
+#define T_REGRESS  1
+#define T_CLASSIFY 2
 #define LIMITED_EPOCHES  100
 #define LIMITED_VALIDATE 10
 
@@ -23,6 +25,7 @@ class LatentFactorModel;
 
 class MfParams{
 public:
+    int type;
     int num_factor;
     double sigma;
     double lambda;
@@ -32,15 +35,16 @@ public:
 
 public:
     MfParams();
-    MfParams(int _num_factor, double _sigma, double _lambda, int _max_epoch, double _alpha, int _validate);
+    MfParams(int _type, int _num_factor, double _sigma, double _lambda, int _max_epoch, double _alpha, int _validate);
 };
 
 class MatrixFactorization{
 
+public:
+    static pthread_rwlock_t rwlock;
+
 private:
     
-    pthread_rwlock_t rwlock;
-
     typedef struct{
         int row;
         int col;
@@ -49,9 +53,12 @@ private:
     
     Triplet* data;
 
-    double rmse_train[LIMITED_EPOCHES];
-    double rmse_validate[LIMITED_EPOCHES];
-    
+    double loss_train[LIMITED_EPOCHES];
+    double loss_validate[LIMITED_EPOCHES];
+
+    double clf_err_train[LIMITED_EPOCHES];
+    double clf_err_validate[LIMITED_EPOCHES];   
+ 
     int num_train;
     int num_validate;
 
@@ -63,9 +70,9 @@ public:
 
     MatrixFactorization();
     LatentFactorModel* train(MfParams* params, SparseMatrix* matrix, string path);
-    double validate(int start, int end);
+    void validate(int start, int end, int epoch);
     double predict(Triplet* p);
-    double test(string in, string out);
+    void test(string in, string out);
 
     MfParams* getMfParams(){ return _params; }
     void setMfParams(MfParams* params){

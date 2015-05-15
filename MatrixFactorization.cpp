@@ -1,6 +1,12 @@
 #include "MatrixFactorization.h"
 
+double sigmoid(double s){
+    return 1.0 / (1.0 + exp(-s));
+}
+
 MfParams::MfParams(){
+    // type = T_REGRESS;
+    type = T_CLASSIFY;
     num_factor = 25;
     sigma = 0.01;
     lambda = 0.005;
@@ -9,8 +15,9 @@ MfParams::MfParams(){
     validate = 0;
 }
 
-MfParams::MfParams(int _num_factor, double _sigma, double _lambda, int _max_epoch, double _alpha, int _validate){
+MfParams::MfParams(int _type, int _num_factor, double _sigma, double _lambda, int _max_epoch, double _alpha, int _validate){
 
+    type = _type;
     num_factor = _num_factor;
     sigma = _sigma;
     lambda = _lambda;
@@ -28,13 +35,18 @@ MfParams::MfParams(int _num_factor, double _sigma, double _lambda, int _max_epoc
 
 }
 
+pthread_rwlock_t MatrixFactorization::rwlock;
+
 MatrixFactorization::MatrixFactorization()
 {
-    pthread_rwlock_init(&rwlock, NULL);
+    pthread_rwlock_init(&MatrixFactorization::rwlock, NULL);
     data = NULL;
     
-    memset(rmse_train, 0, sizeof(rmse_train));
-    memset(rmse_validate, 0, sizeof(rmse_validate));
+    memset(loss_train, 0, sizeof(loss_train));
+    memset(loss_validate, 0, sizeof(loss_validate));
+
+    memset(clf_err_train, 0, sizeof(clf_err_train));
+    memset(clf_err_validate, 0, sizeof(clf_err_validate));
 
     num_train = 0;
     num_validate = 0;
@@ -49,12 +61,12 @@ void* MatrixFactorization::run_helper(void* params){
     char buffer[MAX_LINE_LENGTH];
     // (LatentFactorModel*)((void**)params)[0];
     string path = *(string*)((void**)params)[1];
-    snprintf(buffer, sizeof(buffer), "%.4d", *(int*)((void**)params)[2]);
-    pthread_rwlock_t rwlock = *(pthread_rwlock_t*)((void**)params)[3];
-    
-    pthread_rwlock_rdlock(&rwlock);
+    snprintf(buffer, sizeof(buffer), "pass-%.4d", *(int*)((void**)params)[2]);
+    // pthread_rwlock_t rwlock = *(pthread_rwlock_t*)((void**)params)[3];
+ 
+    pthread_rwlock_wrlock(&MatrixFactorization::rwlock);
     bool ret = ((LatentFactorModel*)((void**)params)[0])->dump(path + buffer);
-    pthread_rwlock_unlock(&rwlock); 
+    pthread_rwlock_unlock(&MatrixFactorization::rwlock); 
     return (void*) ret;
 }
 
@@ -65,7 +77,7 @@ LatentFactorModel* MatrixFactorization::train(MfParams* params, SparseMatrix* ma
 
     _params = params;
     _matrix = matrix;
-    _model = new LatentFactorModel(_matrix, _params->num_factor, _params->sigma);
+    _model = new LatentFactorModel(_matrix, _params->type, _params->num_factor, _params->sigma);
 
     data = (Triplet*) malloc(_matrix->length() * sizeof(Triplet));
     map<pair<int, int>, double>::iterator iter;
@@ -89,13 +101,12 @@ LatentFactorModel* MatrixFactorization::train(MfParams* params, SparseMatrix* ma
 
     clock_t start, terminal;
     pthread_t pt;
-    double dot, err, sum_sqr_err, duration;
+    double dot, err, duration, prob;
     double bu_update, bi_update;
     double p[_params->num_factor], q[_params->num_factor], swap[_params->num_factor];
 
     for(s = 0; s < _params->max_epoch; s++){
         random_shuffle(data, data + num_train);
-        sum_sqr_err = 0.0;
         start = clock();
 
         for(n = 0; n < num_train; n++){
@@ -110,10 +121,16 @@ LatentFactorModel* MatrixFactorization::train(MfParams* params, SparseMatrix* ma
             dot = 0.0;
             for(k = 0; k < _params->num_factor; k++){
                 dot += p[k] * q[k];
+            }   
+
+            if(_params->type == T_REGRESS){
+                err = t.val - (_model->mu + bu_update + bi_update + dot);
             }
-    
-            err = t.val - (_model->mu + bu_update + bi_update + dot);
-    
+            else if(_params->type == T_CLASSIFY){
+                prob = sigmoid(_model->mu + bu_update + bi_update + dot);
+                err = t.val - prob;
+            }
+
             for(k = 0; k < _params->num_factor; k++){
                 swap[k] = p[k] + _params->alpha * (err * q[k] - _params->lambda * p[k]);
                 q[k] += _params->alpha * (err * p[k] - _params->lambda * q[k]);
@@ -128,35 +145,57 @@ LatentFactorModel* MatrixFactorization::train(MfParams* params, SparseMatrix* ma
             memcpy(_model->Q + (t.col * _params->num_factor), q, sizeof(q));
             _model->bu[t.row] = bu_update;
             _model->bi[t.col] = bi_update;
-            sum_sqr_err += err * err;
-    
+            
+            if(_params->type == T_REGRESS){
+                loss_train[s] += err * err;
+            }
+            else if(_params->type == T_CLASSIFY){
+                loss_train[s] -= t.val * log(prob) + (1.0 - t.val)  * log(1.0 - prob);
+                if((prob >= 0.5 && t.val == 0.0) || (prob < 0.5 && t.val == 1.0))
+                    clf_err_train[s] += 1.0;
+            }
         }
 
-        pthread_rwlock_wrlock(&rwlock);
+        pthread_rwlock_wrlock(&MatrixFactorization::rwlock);
         _model->swap();
-        pthread_rwlock_unlock(&rwlock); 
+        pthread_rwlock_unlock(&MatrixFactorization::rwlock); 
       
         int epoch = s;
-        void* params[4] = {_model, &path, &epoch, &rwlock};
-        // void* params[4] = {_model, &s, &rwlock};
+        // void* params[4] = {_model, &path, &epoch, &rwlock};
+        void* params[3] = {_model, &path, &epoch};
+
         pthread_create(&pt, NULL, &MatrixFactorization::run_helper, params);
-        
+
         // _model->dump("test");
 
         terminal = clock();
         duration = (double) (terminal - start) / (double) (CLOCKS_PER_SEC);
 
-        rmse_train[s] = sqrt(sum_sqr_err / _matrix->length());
-        rmse_validate[s] = validate(num_train, num_train + num_validate);
+        if(_params->type == T_REGRESS){
+            loss_train[s] = sqrt(loss_train[s] / num_train);
+        }
+        else if(_params->type == T_CLASSIFY){
+            loss_train[s] = loss_train[s] / num_train;
+            clf_err_train[s] = clf_err_train[s] / num_train;
+        }
+        validate(num_train, num_train + num_validate, s);
 
         cerr << setiosflags(ios::fixed);
 
-        cerr << "[Iter] = " << setw(4) << setfill('0') << s << " " \
-             << "[RMSE] = " << setprecision(6) << rmse_train[s] << " ";
-        if(_params->validate != 0){
-            cerr << "[ValidateRMSE] = " << setprecision(6) << rmse_validate[s] << " ";
+        cerr << "[Iter]: " << setw(4) << setfill('0') << s << " " \
+             << "\t[Train]: Loss=" << setprecision(4) << loss_train[s] << " ";
+    
+        if(_params->type == T_CLASSIFY){
+            cerr << "Accuracy=" << setprecision(4) << 100.0 * (1.0 - clf_err_train[s]) << "% ";
         }
-        cerr << "[Duration] = " << setprecision(2) << duration << " Sec."  << endl;      
+
+        if(_params->validate != 0){
+            cerr << "\t[Validate]: Loss=" << setprecision(4) << loss_validate[s] << " ";
+            if(_params->type == T_CLASSIFY){
+                cerr << "Accuracy=" << setprecision(4) << 100.0 * (1.0 - clf_err_validate[s]) << "% ";
+            }
+        }
+        cerr << "\t[Duration]: " << setprecision(2) << duration << " Sec."  << endl;      
     }
 
     pthread_join(pt, NULL);
@@ -164,15 +203,28 @@ LatentFactorModel* MatrixFactorization::train(MfParams* params, SparseMatrix* ma
 }
 
 
-double MatrixFactorization::validate(int start, int end){
-    double pred, err, sum_sqr_err;
-    sum_sqr_err = 0.0;
+void MatrixFactorization::validate(int start, int end, int epoch){
+    double pred, err, val;
     for(int k = start; k < end; k++){
+        val = (data + k)->val;
         pred = predict(data + k);
-        err = (data + k)->val - pred;
-        sum_sqr_err += err * err;
+        err = val - pred;
+        if(_params->type == T_REGRESS){
+            loss_validate[epoch] += err * err;            
+        }
+        else if(_params->type == T_CLASSIFY){
+            loss_validate[epoch] -= val * log(pred) + (1.0 - val) * log(1.0 - pred);
+            if((pred >= 0.5 && val == 0.0) || (pred < 0.5 && val == 1.0))
+                clf_err_validate[epoch] += 1.0;
+        }
     }
-    return sqrt(sum_sqr_err / (end - start));
+    if(_params->type == T_REGRESS){
+        loss_validate[epoch] = sqrt(loss_validate[epoch] / (end - start));
+    }
+    else if(_params->type == T_CLASSIFY){
+        loss_validate[epoch] = loss_validate[epoch] / (end - start);
+        clf_err_validate[epoch] = clf_err_validate[epoch] / (end - start);
+    }
 }
 
 double MatrixFactorization::predict(Triplet* p){
@@ -190,33 +242,38 @@ double MatrixFactorization::predict(Triplet* p){
         check++;
     }
     
-    if(check == 0 || check == 1) return pred;
-
-    for(k = 0; k < _params->num_factor; k++){
-        pred += _model->P[p->row * _params->num_factor + k] * _model->Q[p->col * _params->num_factor + k];
+    if(check != 0 && check != 1){
+        for(k = 0; k < _params->num_factor; k++){
+            pred += _model->P[p->row * _params->num_factor + k] * _model->Q[p->col * _params->num_factor + k];
+        }
     }
+
+    if(_params->type == T_CLASSIFY){
+        pred = sigmoid(pred);
+    }
+
     return pred;
 }
 
-double MatrixFactorization::test(string in, string out){
+void MatrixFactorization::test(string in, string out){
    
     ifstream is(in.c_str());
     ofstream os(out.c_str());
     string row, col;
-    double rating, pred, err, sum_sqr_err;
+    double val, pred, err, loss, clf_err;
     char line[MAX_LINE_LENGTH];
     int n;
     Triplet* p = new Triplet();
     
-
-    sum_sqr_err = 0.0;
+    loss = 0.0;
+    clf_err = 0.0;
     n = 0;
 
     while(is.getline(line, MAX_LINE_LENGTH)){
         string strline(line);
         row = string(strtok(line, " "));
         col = string(strtok(NULL, " "));
-        rating = atof(strtok(NULL, " "));
+        val = atof(strtok(NULL, " "));
        
         if(_matrix->rows()->find(row) == _matrix->rows()->end()){
             p->row = -1;
@@ -232,22 +289,46 @@ double MatrixFactorization::test(string in, string out){
             p->col = _matrix->cols()->find(col)->second;
         }
 
-        p->val = rating;
+        p->val = val;
 
+        // cerr << row << " " << p->row << " " << col << " " << p->col << " " << p->val << endl;
         pred = predict(p);
+        // cerr << pred << endl;
         err = p->val - pred;
-        sum_sqr_err += err * err;
-        os << pred << "\t" << strline << endl;
+
+        if(_params->type == T_REGRESS){
+            loss += err * err;
+            os << pred << "\t" << strline << endl;
+        }
+
+        else if(_params->type == T_CLASSIFY){
+            loss -= p->val * log(pred) + (1.0 - p->val) * log(1.0 - pred);
+            if((pred >= 0.5 && p->val == 0.0) || (pred < 0.5 && p->val == 1.0))
+                clf_err += 1.0;
+            os << (pred >= 0.5 ? "1" : "0") << "\t" << setprecision(4) << pred << "\t" << strline << endl;
+        }
+
         n++;
     }
 
     is.close();
     os.close();
-    return sqrt(1.0 * sum_sqr_err / n);
+
+    if(_params->type == T_REGRESS){
+        loss = sqrt(1.0 * loss / n);
+        cerr << "[Test]: Loss=" << setprecision(4) << loss << endl;
+    }
+    else if(_params->type == T_CLASSIFY){
+        loss = 1.0 * loss / n;
+        clf_err = 1.0 * clf_err / n;
+        cerr << "[Test]: Loss=" << setprecision(4) << loss << " ";
+        cerr << "Accuracy=" << setprecision(4) << 100.0 * (1.0 - clf_err) << "% " << endl;
+    }
+
 }
 
 MatrixFactorization::~MatrixFactorization(){
     free(data);
-    pthread_rwlock_destroy(&rwlock);
+    pthread_rwlock_destroy(&MatrixFactorization::rwlock);
 }
 

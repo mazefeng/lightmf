@@ -117,9 +117,8 @@ int main(int argc, char **argv){
     mf->setSparseMatrix(matrix);
     mf->setLatentFactorModel(model);
 
-    double rmse = mf->test(opt->test, opt->output);
+    mf->test(opt->test, opt->output);
 
-    cerr << "RMSE on [" << opt->test << "]: " << rmse << endl;
 
     return 0;
 }
