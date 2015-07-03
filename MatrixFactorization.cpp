@@ -73,30 +73,43 @@ void* MatrixFactorization::run_helper(void* params){
 
 LatentFactorModel* MatrixFactorization::train(MfParams* params, SparseMatrix* matrix, string path){
 
-    int k, s, n;
+    bool ret;
+    int j, k, s, n, row, col;
+    pair<int, int> index;
 
     _params = params;
     _matrix = matrix;
     _model = new LatentFactorModel(_matrix, _params->type, _params->num_factor, _params->sigma);
 
-    data = (Triplet*) malloc(_matrix->length() * sizeof(Triplet));
-    map<pair<int, int>, double>::iterator iter;
+    data = (Triplet*) malloc(_matrix->size() * sizeof(Triplet));
+    map<pair<int, int>, vector<double>*>::iterator iter;
 
-    for(iter = _matrix->kv_dict()->begin(), k = 0; iter != _matrix->kv_dict()->end(); iter++, k++){
-        data[k].row = iter->first.first;
-        data[k].col = iter->first.second;
-        data[k].val = iter->second;
+    j = 0;
+    for(iter = _matrix->kv_dict()->begin(); iter != _matrix->kv_dict()->end(); iter++){
+        index = iter->first;
+        row = index.first;
+        col = index.second;
+        vector<double>* rating_list = iter->second;
+        if(rating_list != NULL){
+            for(k = 0; k < rating_list->size(); k++){
+                
+                data[j].row = row;
+                data[j].col = col;
+                data[j].val = rating_list->at(k);
+                j += 1;
+            }
+        }
     }
 
-    random_shuffle(data, data + _matrix->length());
+    random_shuffle(data, data + _matrix->size());
 
     if(_params->validate == 0){
-        num_train = _matrix->length();
+        num_train = _matrix->size();
         num_validate = 0;
     }
     else{
-        num_validate = _matrix->length() / _params->validate;
-        num_train = _matrix->length() - num_validate;
+        num_validate = _matrix->size() / _params->validate;
+        num_train = _matrix->size() - num_validate;
     }
 
     clock_t start, terminal;

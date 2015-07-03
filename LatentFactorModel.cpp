@@ -6,7 +6,7 @@ LatentFactorModel::LatentFactorModel(SparseMatrix* _matrix, int _type, int _num_
     num_factor = _num_factor;
     sigma = _sigma;
 
-    mu = matrix->mean();
+    mu = 1.0 * matrix->sum() / matrix->size();
     P0 = (double*) malloc(matrix->rows()->size() * num_factor * sizeof(double));
     P1 = (double*) malloc(matrix->rows()->size() * num_factor * sizeof(double));
     Q0 = (double*) malloc(matrix->cols()->size() * num_factor * sizeof(double));
