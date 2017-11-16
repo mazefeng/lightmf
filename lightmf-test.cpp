@@ -45,15 +45,15 @@ int parse_cmd_line(int argc, char *const argv[]){
         switch (option) {
             case 0:
                 opt->flags |= FLAG_MODEL;
-                memcpy(opt->model, optarg, strlen(optarg));
+                strcpy(opt->model, optarg);
                 break;
             case 1:
                 opt->flags |= FLAG_TEST;
-                memcpy(opt->test, optarg, strlen(optarg));
+                strcpy(opt->test, optarg);
                 break;
             case 2:
                 opt->flags |= FLAG_OUTPUT;
-                memcpy(opt->output, optarg, strlen(optarg));
+                strcpy(opt->output, optarg);
                 break;
             case 3:
                 opt->flags |= FLAG_HELP;

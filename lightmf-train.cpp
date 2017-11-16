@@ -60,11 +60,11 @@ int parse_cmd_line(int argc, char *const argv[]){
         switch (option) {
             case 0:
                 opt->flags |= FLAG_TRAIN;
-                memcpy(opt->train, optarg, strlen(optarg));
+                strcpy(opt->train, optarg);
                 break;
             case 1:
                 opt->flags |= FLAG_MODEL;
-                memcpy(opt->model, optarg, strlen(optarg));
+                strcpy(opt->model, optarg);
                 break;
             case 2:
                 opt->flags |= FLAG_TYPE;
