@@ -181,6 +181,8 @@ bool LatentFactorModel::load(string path){
     is.open(meta_file.c_str(), ios::in);
 
     if(!is.good()){ 
+        delete rows;
+        delete cols;
         throw runtime_error(meta_file + " not exist"); 
     }
 
