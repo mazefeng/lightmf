@@ -70,6 +70,7 @@ bool SparseMatrix::set_rating(const string& row, const string& col, double ratin
     rating_list->push_back(rating);
     
     // _kv_dict->insert(pair<pair<int, int>, double>(k, rating));
+    return (0);
 
 } 
 

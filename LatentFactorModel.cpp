@@ -83,6 +83,7 @@ bool LatentFactorModel::init_params(double* v, int size){
         n = sqrt(-2.0 * log(1.0 * rand() / RAND_MAX)) * sin(2.0 * PI * (1.0 * rand() / RAND_MAX));
         v[k] = sigma * n;
     }
+    return (0);
 }
 
 bool LatentFactorModel::dump(string path){
